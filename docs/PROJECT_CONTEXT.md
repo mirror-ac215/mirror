@@ -13,7 +13,7 @@ Inherited assets:
 | Asset | Details |
 |---|---|
 | CV model | PyTorch; FER-2013, 7 classes; best about 67% accuracy, 0.64 macro-F1; ViT-B/16, EfficientNet-B0 and MobileNetV3 checkpoints |
-| Persona LLM | Qwen2.5-3B-Instruct with a QLoRA adapter (r=32) trained on about 3k prompt/response pairs |
+| Persona LLM | Qwen2.5-3B-Instruct with a QLoRA adapter (r=32) trained on about 380 prompt/response pairs |
 
 ## Team
 
