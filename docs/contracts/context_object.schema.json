@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContextObject",
+  "description": "One bounded, uncertainty-labelled summary of the patient's signals, sent from the api-gateway to the llm-service once per chat turn.",
+  "type": "object",
+  "required": ["visual", "text", "agreement", "tone_mode"],
+  "additionalProperties": false,
+  "properties": {
+    "visual": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["ok", "uncertain", "dropped", "camera_off"] },
+        "top2": { "$ref": "#/$defs/top2" },
+        "stability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "window_s": { "type": "number", "exclusiveMinimum": 0 },
+        "n_frames": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "text": {
+      "type": "object",
+      "required": ["top2"],
+      "additionalProperties": false,
+      "properties": {
+        "top2": { "$ref": "#/$defs/top2" }
+      }
+    },
+    "agreement": { "enum": ["agree", "disagree", "n/a"] },
+    "tone_mode": { "enum": ["coach", "supportive"] },
+    "note": { "type": "string" }
+  },
+  "$defs": {
+    "top2": {
+      "description": "The two most likely labels with probabilities, most likely first.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          { "type": "string" },
+          { "type": "number", "minimum": 0, "maximum": 1 }
+        ],
+        "items": false
+      }
+    }
+  }
+}
