@@ -1,0 +1,9 @@
+{
+  "visual": {
+    "status": "happy",
+    "top2": [["sad", 1.4]]
+  },
+  "text": { "top2": [["sadness", 0.71]] },
+  "agreement": "agree",
+  "tone_mod": "coach"
+}
