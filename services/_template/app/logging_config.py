@@ -16,6 +16,8 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
             "request_id": request_id_context.get(),
+            "path": getattr(record, "path", None),
+            "status_code": getattr(record, "status_code", None),
         }
         return json.dumps(payload)
 
