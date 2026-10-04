@@ -1,0 +1,13 @@
+{
+  "visual": {
+    "status": "ok",
+    "top2": [["sad", 0.46], ["neutral", 0.31]],
+    "stability": 0.8,
+    "window_s": 10,
+    "n_frames": 8
+  },
+  "text": { "top2": [["sadness", 0.71], ["neutral", 0.12]] },
+  "agreement": "agree",
+  "tone_mode": "supportive",
+  "note": "Estimates of expression, not facts about feelings."
+}
