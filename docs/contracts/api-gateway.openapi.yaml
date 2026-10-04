@@ -124,10 +124,25 @@ paths:
       responses:
         "200":
           description: >
-            Server-Sent Events. Event types:
-            "crisis" (one event with CrisisPayload, then the stream ends; no persona reply),
-            "token" (data = next piece of reply text),
-            "done" (data = DonePayload, then the stream ends).
+            Server-Sent Events. Every `data:` line is JSON (so newlines in the reply are safe).
+            Event types:
+              crisis: data = CrisisPayload; no persona reply, the stream ends
+              token:  data = TokenPayload, the next piece of reply text
+              done:   data = DonePayload; the stream ends
+
+            Example, normal turn:
+              event: token
+              data: {"text": "I hear you."}
+
+              event: token
+              data: {"text": " What made today hard?"}
+
+              event: done
+              data: {"message_id": "m-123", "context": {...}}
+
+            Example, crisis turn:
+              event: crisis
+              data: {"message": "...", "resources": [{"name": "988 Suicide & Crisis Lifeline", "contact": "call or text 988"}], "review_flag_created": true}
           content:
             text/event-stream:
               schema: { type: string }
@@ -210,7 +225,7 @@ components:
 
     CrisisPayload:
       type: object
-      required: [message, resources, review_flag_created]
+      required: [text]
       properties:
         message: { type: string }
         resources:

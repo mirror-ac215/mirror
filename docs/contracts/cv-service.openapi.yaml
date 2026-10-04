@@ -49,6 +49,10 @@ paths:
 components:
   schemas:
     Prediction:
+      description: >
+        When face_found is false there is no visual signal: probs = {}, top2 = [],
+        margin = null, uncertain = null. This is different from uncertain = true,
+        which means a face was seen but the prediction is weak.
       type: object
       required: [face_found, probs, top2, margin, uncertain, model_version, latency_ms]
       properties:
@@ -66,10 +70,10 @@ components:
             prefixItems: [{ type: string }, { type: number }]
           example: [["sad", 0.46], ["neutral", 0.31]]
         margin:
-          type: number
-          description: top-1 probability minus top-2 probability
+          type: [number, "null"]
+          description: top-1 probability minus top-2 probability; null when face_found is false
         uncertain:
-          type: boolean
-          description: true when margin is below the service threshold
+          type: [boolean, "null"]
+          description: true when margin is below the service threshold; null when face_found is false
         model_version: { type: string, example: cv-vit-b16-v3 }
         latency_ms: { type: number }
