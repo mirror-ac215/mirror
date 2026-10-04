@@ -127,7 +127,7 @@ mirror/
   services/api-gateway/      orchestrator; modules: safety/, text_emotion/, gating/, fusion/
   services/cv-service/
   services/llm-service/
-  services/db/               init.sql, seed.sql
+  services/db/               init.sql, seed.sh
   pipelines/data-preprocess/ pipelines/persona-data/ pipelines/cv-train/
   pipelines/fairness-audit/  pipelines/llm-finetune/  pipelines/llm-eval/
   infra/compose.yml  infra/caddy/  infra/monitoring/  infra/pulumi/ (optional)
