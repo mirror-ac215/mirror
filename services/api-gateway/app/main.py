@@ -3,6 +3,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Request, Response
 
 from app.config import Settings
+from app.health import check_dependencies
 from app.logging_config import configure_logging, request_id_context
 
 settings = Settings()
@@ -29,8 +30,12 @@ async def add_request_id(request: Request, call_next):
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, object]:
+    """Gateway is alive; each dependency is reported separately (contract:/health)."""
+    dependecies = await check_dependencies(settings)
+    status = "ok" if all(state == "ok" for state in dependecies.values()) else "degraded"
+    return {"status": status, "dependencies": dependecies}
+
 
 
 @app.get("/metrics")
