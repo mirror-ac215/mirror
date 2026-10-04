@@ -1,49 +1,45 @@
-# Mirror Python service template
+# api-gateway
 
-A copyable baseline for Mirror's Python/FastAPI services. It uses Python 3.11 and `uv`, exposes health and metrics endpoints, reads configuration from environment variables, emits JSON logs, and includes tests plus a Docker image.
-
-## Included baseline
-
-- FastAPI application
-- `GET /health` returning `{"status":"ok"}`
-- `GET /metrics` placeholder for service-specific metrics
-- `X-Request-ID` propagation: preserves an inbound value or generates one, returns it in the response, and includes it in application logs
-- JSON log lines for completed HTTP requests
-- `pydantic-settings` configuration via environment variables
-- pytest and Ruff
-- Dockerfile with a Docker health check
-
-## Prerequisites
-
-- Docker Desktop
-- `uv` (it installs the pinned Python 3.11 interpreter when necessary)
+The only service the frontend calls. v0 (MS2): every endpoint from `docs/contracts/api-gateway.openapi.yaml` exists with the right shapes and status codes, but returns fake data. The real CV call, safety check, fusion and LLM call arrive in MS3.
 
 ## Run locally
 
 ```bash
 uv sync
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --port 8000 --reload
 ```
 
-In a second terminal:
+Interactive API docs: http://localhost:8000/docs. Click **Authorize** and enter `dev-patient-token` (or `dev-clinician-token`).
 
-```bash
-curl --fail --silent --show-error http://localhost:8000/health
-```
+## Endpoints (v0)
 
-Expected response:
+| Endpoint | Returns |
+|---|---|
+| `GET /health` | `ok` / `degraded` + each dependency (`cv-service`, `llm-service`, `db`); always 200 so Docker doesn't restart the gateway when a dependency is down |
+| `POST /auth/login` | demo token; any email containing "clinician" logs in as clinician (real auth: M4-02) |
+| `POST /sessions` | 201, in-memory session (database: MS3) |
+| `POST /sessions/{id}/frames` | 202; frame read and discarded, never stored; 409 without camera consent |
+| `POST /sessions/{id}/messages` | Server-Sent Events: `token` events (`{"text": ...}`) then `done` |
 
-```json
-{"status":"ok"}
-```
+Errors: 401 no/invalid token, 403 wrong role, 404 unknown session, 409 no camera consent, 422 malformed request.
 
-Interactive API documentation is available at <http://localhost:8000/docs>.
+## Configuration (environment variables)
 
-## Quality checks
+| Variable | Default |
+|---|---|
+| `CV_SERVICE_URL` | `http://cv-service:8001` |
+| `LLM_SERVICE_URL` | `http://llm-service:8002` |
+| `DB_HOST` / `DB_PORT` | `db` / `5432` |
+| `DEPENDENCY_TIMEOUT_S` | `2.0` |
+| `CORS_ORIGINS` | `["http://localhost:3000","http://localhost:8080"]` |
+
+Defaults use docker-compose service names. No secrets needed in v0.
+
+## Checks
 
 ```bash
 uv run ruff check .
-uv run pytest -v
+uv run pytest -q
 ```
 
 ## Configuration
