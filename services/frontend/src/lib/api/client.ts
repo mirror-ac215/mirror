@@ -3,7 +3,7 @@
 
 import { API_BASE_URL, USE_MOCK_API } from "@/lib/config";
 import * as mock from "./mock";
-import type { ChatEvent, FrameAck, LoginResponse, Role, Session } from "./types";
+import type { ChatEvent, FrameAck, LoginResponse, Role, Session, TokenPayload } from "./types";
 
 let accessToken: string | null = null;
 
@@ -78,12 +78,13 @@ export async function sendMessage(
     buffer = blocks.pop() ?? ""; // keep an unfinished block for the next chunk
     for (const block of blocks) {
       let type = "";
-      let data = "";
+      const dataLines: string[] = [];
       for (const line of block.split("\n")) {
         if (line.startsWith("event:")) type = line.slice(6).trim();
-        else if (line.startsWith("data:")) data += line.slice(5).trimStart();
+        else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
       }
-      if (type === "token") onEvent({ type, data });
+      const data = dataLines.join("\n"); // the SSE standard joins multiple data lines with newlines
+      if (type === "token") onEvent({ type, data: (JSON.parse(data) as TokenPayload).text });
       else if (type === "crisis" || type === "done") onEvent({ type, data: JSON.parse(data) });
     }
   }

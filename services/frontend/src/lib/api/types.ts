@@ -38,6 +38,11 @@ export interface ContextObject {
   note?: string;
 }
 
+/** data of a "token" event, e.g. {"text": "I hear you."} */
+export interface TokenPayload {
+  text: string;
+}
+
 export interface CrisisPayload {
   message: string;
   resources: { name: string; contact: string }[];
