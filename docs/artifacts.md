@@ -8,7 +8,7 @@ What we store in the team bucket `gs://mirror-ac215-data/`, where each file came
 | `models/cv/inherited-v3/efficientnet_b0_v3.pth` | EfficientNet-B0, backup / lighter CV model | 16 MB | same notebook | test: 65.2% top-1, 0.626 macro-F1 |
 | `models/cv/inherited-v3/mobilenet_v3_large_best.pth` | MobileNetV3-Large, lightest CV model | 16 MB | CSCI E-25, `01_model_training_and_evaluation.ipynb` | best validation accuracy 60.6% |
 | `models/cv/inherited-v3/per_class_thresholds.npy` | Per-class decision thresholds for the CV models | <1 KB | v3 notebook | n/a |
-| `models/llm/adapter-v1/` | QLoRA adapter on `Qwen/Qwen2.5-3B-Instruct` (r=32, alpha=64, dropout 0.05, all attention and MLP layers) | 240 MB | CSCI E-222, `Jordan_Peterson_Clone.ipynb` (masked, best checkpoint) | to be evaluated in MS3/MS4 |
+| `models/llm/adapter-v1/` | LoRA **adapter only** (not the full model) for `Qwen/Qwen2.5-3B-Instruct`; the base model (~6 GB) is pulled from Hugging Face by name at load time. Key files: `adapter_model.safetensors` (trained weights), `adapter_config.json` (base model + r=32, alpha=64, dropout 0.05), tokenizer + chat template | 240 MB | CSCI E-222, `Jordan_Peterson_Clone.ipynb` (masked, best checkpoint) | to be evaluated in MS3/MS4 |
 | `data/raw/fer2013/archive.zip` | FER-2013 dataset | 60 MB | public (Kaggle) | 7 classes, 48x48 grayscale |
 | `data/raw/persona/*.csv` | Persona prompt/response pairs | <1 MB | extracted from public long-form interviews | 380 pairs: 304 train / 38 val / 38 test |
 
