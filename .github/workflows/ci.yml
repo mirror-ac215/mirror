@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    name: Detect changed components
+    runs-on: ubuntu-latest
+    outputs:
+      service_template: ${{ steps.filter.outputs.service_template }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.1.7
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.2
+        with:
+          filters: |
+            service_template:
+              - 'services/_template/**'
+              - '.github/workflows/**'
+
+  service_template:
+    name: Service template checks
+    needs: changes
+    if: needs.changes.outputs.service_template == 'true'
+    uses: ./.github/workflows/python-service-ci.yml
+    with:
+      service_path: services/_template
+      image_name: mirror-service-template-ci
+
+  ci_summary:
+    name: CI summary
+    needs: [changes, service_template]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required component checks
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          SERVICE_TEMPLATE_CHANGED: ${{ needs.changes.outputs.service_template }}
+          SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
+        run: |
+          if [ "$CHANGES_RESULT" != "success" ]; then
+            echo "Changed-component detection did not pass: $CHANGES_RESULT"
+            exit 1
+          fi
+
+          if [ "$SERVICE_TEMPLATE_CHANGED" = "true" ] && [ "$SERVICE_TEMPLATE_RESULT" != "success" ]; then
+            echo "Service template checks did not pass: $SERVICE_TEMPLATE_RESULT"
+            exit 1
+          fi
+
+          echo "All CI checks required for this pull request passed."
