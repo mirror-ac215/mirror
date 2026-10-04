@@ -223,9 +223,15 @@ components:
         started_at: { type: string, format: date-time }
         camera_consent: { type: boolean }
 
-    CrisisPayload:
+    TokenPayload:
       type: object
       required: [text]
+      properties:
+        text: { type: string }
+
+    CrisisPayload:
+      type: object
+      required: [message, resources, review_flag_created]
       properties:
         message: { type: string }
         resources:
