@@ -1,7 +1,9 @@
 from uuid import uuid4
 
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.chat import router as chat_router
 from app.config import Settings
 from app.health import check_dependencies
 from app.logging_config import configure_logging, request_id_context
@@ -10,7 +12,15 @@ settings = Settings()
 logger = configure_logging(settings.log_level)
 
 app = FastAPI(title=settings.app_name)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+)
 
+app.include_router(chat_router)
 
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):

@@ -16,3 +16,6 @@ class Settings(BaseSettings):
     db_host: str = "db"
     db_port: int = 5432
     dependency_timeout_s: float = 2.0 
+    
+    # Browser origins allowed to call the gateway (frontend dev server and container).
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8080"]
