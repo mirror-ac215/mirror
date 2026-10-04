@@ -4,7 +4,10 @@ The token is a fixed string per role, so the flow (log in, send a Bearer token,
 get 401/403) already works end to end, but nothing here is secure yet.
 """
 
-from fastapi import Header, HTTPException
+from typing import Annotated
+
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.schemas import LoginResponse, Role
 
@@ -12,6 +15,10 @@ DEMO_TOKENS: dict[str, Role] = {
     "dev-patient-token": "patient",
     "dev-clinician-token": "clinician",
 }
+
+# Declares "Authorization: Bearer <token>" as a security scheme (the contract's
+# bearerAuth). auto_error=False lets us return our own 401 message.
+bearer = HTTPBearer(auto_error=False)
 
 
 def demo_login(email: str) -> LoginResponse:
@@ -21,19 +28,20 @@ def demo_login(email: str) -> LoginResponse:
     return LoginResponse(access_token=token, role=role, user_id=user_id)
 
 
-def current_role(authorization: str | None = Header(default=None)) -> Role:
+def current_role(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> Role:
     """401 if there is no valid token; otherwise the caller's role."""
-    if not authorization or not authorization.startswith("Bearer "):
+    if credentials is None:
         raise HTTPException(status_code=401, detail="Not logged in")
-    role = DEMO_TOKENS.get(authorization.removeprefix("Bearer "))
+    role = DEMO_TOKENS.get(credentials.credentials)
     if role is None:
         raise HTTPException(status_code=401, detail="Invalid token")
     return role
 
 
-def require_patient(authorization: str | None = Header(default=None)) -> Role:
+def require_patient(role: Annotated[Role, Depends(current_role)]) -> Role:
     """403 if the caller is logged in but is not a patient."""
-    role = current_role(authorization)
     if role != "patient":
         raise HTTPException(status_code=403, detail="Patients only")
     return role
