@@ -18,7 +18,7 @@ DEMO_TOKENS: dict[str, Role] = {
 
 # Declares "Authorization: Bearer <token>" as a security scheme (the contract's
 # bearerAuth). auto_error=False lets us return our own 401 message.
-bearer = HTTPBearer(auto_error=False)
+bearer = HTTPBearer(auto_error=False, scheme_name="bearerAuth")
 
 
 def demo_login(email: str) -> LoginResponse:

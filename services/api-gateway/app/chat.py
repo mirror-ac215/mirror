@@ -49,7 +49,15 @@ def login(body: LoginRequest) -> LoginResponse:
     return demo_login(body.email)
 
 
-@router.post("/sessions", status_code=201, dependencies=[Depends(require_patient)])
+@router.post(
+    "/sessions",
+    status_code=201,
+    dependencies=[Depends(require_patient)],
+    responses={
+        401: {"description": "Not logged in"},
+        403: {"description": "Patients only"},
+    },
+)
 def start_session(body: SessionCreate) -> Session:
     session = Session(
         session_id=str(uuid4()),
@@ -64,6 +72,12 @@ def start_session(body: SessionCreate) -> Session:
     "/sessions/{session_id}/frames",
     status_code=202,
     dependencies=[Depends(require_patient)],
+    responses={
+        401: {"description": "Not logged in"},
+        403: {"description": "Patients only"},
+        404: {"description": "Unknown session"},
+        409: {"description": "Camera consent not given"},
+    },
 )
 async def receive_frame(session_id: str, image: UploadFile) -> FrameAck:
     session = get_session(session_id)
@@ -73,7 +87,20 @@ async def receive_frame(session_id: str, image: UploadFile) -> FrameAck:
     return FrameAck(visual_status="ok")
 
 
-@router.post("/sessions/{session_id}/messages", dependencies=[Depends(require_patient)])
+@router.post(
+    "/sessions/{session_id}/messages",
+    dependencies=[Depends(require_patient)],
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "Server-sent Events: token events, then done",
+            "content": {"text/event-stream": {}},
+        },
+        401: {"description": "Not logged in"},
+        403: {"description": "Patients only"},
+        404: {"description": "Unknown session"},
+    },
+)
 def send_message(session_id: str, body: MessageRequest) -> StreamingResponse:
     get_session(session_id)
 
