@@ -26,4 +26,5 @@ Open http://localhost:3000.
 - Multi-stage image: stage 1 installs and builds, stage 2 keeps only `.output` and runs as the non-root `node` user.
 - `node_modules/` and `.output/` are never committed; `package-lock.json` is.
 - Port: 3000. Health check: `GET /health`.
+- Why Node, not nginx: TanStack start renders pages on the server (SSR) and serves /health from code. nginx is like a liberian that hands you a ready book from the shelf but doesn't write it (can't run the code) meanwhile Node can run the code and because it does it can also answer /health with {"status": "ok"}
 - No secrets needed yet. The api-gateway URL will come from an environment variable (Part B).
