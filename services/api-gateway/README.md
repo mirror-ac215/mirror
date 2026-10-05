@@ -27,13 +27,15 @@ Errors: 401 no/invalid token, 403 wrong role, 404 unknown session, 409 no camera
 
 | Variable | Default |
 |---|---|
+| `APP_NAME` | `mirror-api-gateway` |
+| `LOG_LEVEL` | `INFO` |
 | `CV_SERVICE_URL` | `http://cv-service:8001` |
 | `LLM_SERVICE_URL` | `http://llm-service:8002` |
 | `DB_HOST` / `DB_PORT` | `db` / `5432` |
 | `DEPENDENCY_TIMEOUT_S` | `2.0` |
 | `CORS_ORIGINS` | `["http://localhost:3000","http://localhost:8080"]` |
 
-Defaults use docker-compose service names. No secrets needed in v0.
+Defaults use docker-compose service names. No secrets needed in v0. All variables are listed in `.env.example`; copy it to `.env` only for local overrides (never commit `.env`).
 
 ## Checks
 
@@ -42,59 +44,19 @@ uv run ruff check .
 uv run pytest -q
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env` only for local overrides:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `APP_NAME` | `mirror-service-template` | FastAPI application title |
-| `LOG_LEVEL` | `INFO` | Application log severity |
-
-Never commit `.env`, passwords, API keys, model weights, or other secrets.
-
 ## Docker
 
-Build from this directory:
+Build and run from this directory:
 
 ```bash
-docker build -t mirror-service-template .
+docker build -t mirror-api-gateway .
+docker run --rm -p 8000:8000 mirror-api-gateway
 ```
 
-Run the image:
+Check it from a second terminal:
 
 ```bash
-docker run --rm -p 8000:8000 mirror-service-template
+curl -f http://localhost:8000/health
 ```
 
-Verify the required health endpoint from a second terminal:
-
-```bash
-curl --fail --silent --show-error http://localhost:8000/health
-```
-
-The image defines a Docker `HEALTHCHECK` for the same endpoint.
-
-## Copy this template for a new service
-
-From the repository root:
-
-```bash
-cp -R services/_template services/<your-service-name>
-cd services/<your-service-name>
-```
-
-Then the service owner must:
-
-1. Change the project `name` and default `APP_NAME`.
-2. Choose and document the service port; update the Dockerfile if it is not `8000`.
-3. Replace the `/metrics` placeholder with service-specific metrics.
-4. Add endpoints, tests, environment variables, Docker Compose configuration, and a CI job for the service.
-5. Run `uv lock` after dependency changes and commit both `pyproject.toml` and `uv.lock`.
-6. Update this README with the new service's purpose, inputs, outputs, run steps, environment variables, and required secrets.
-
-Keep `/health`, JSON logging, request ID propagation, the Python 3.11 pin, and the no-secrets policy.
+Run on its own, `/health` reports `degraded` because cv-service, llm-service and db aren't running. That's expected: the status code is still 200, so the container stays healthy. Inside docker-compose (M2-03) the dependencies resolve by service name.

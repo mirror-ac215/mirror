@@ -12,10 +12,10 @@ async def get_health() -> dict:
     assert response.status_code == 200
     return response.json()
 
-"""monkeypatch is pytest's way of temporarily swapping in a fake. 
-The first two tests replace the real dependency check with "everything up" or "CV down", 
-so they test the gateway's logic without needing the other services to run. 
-The third test uses the real checks against port 1, where nothing ever runs, and 
+"""monkeypatch is pytest's way of temporarily swapping in a fake.
+The first two tests replace the real dependency check with "everything up" or "CV down",
+so they test the gateway's logic without needing the other services to run.
+The third test uses the real checks against port 1, where nothing ever runs, and
 proves they correctly report "down" instead of crashing.
 """
 
