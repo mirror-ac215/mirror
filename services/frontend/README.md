@@ -25,5 +25,5 @@ Open http://localhost:3000.
 - `NITRO_PRESET=node-server` in the Dockerfile switches the build from Lovable's default (Cloudflare) to a plain Node server.
 - Multi-stage image: stage 1 installs and builds, stage 2 keeps only `.output` and runs as the non-root `node` user.
 - `node_modules/` and `.output/` are never committed; `package-lock.json` is.
-- Port: 3000. Health check: `GET /`.
+- Port: 3000. Health check: `GET /health`.
 - No secrets needed yet. The api-gateway URL will come from an environment variable (Part B).

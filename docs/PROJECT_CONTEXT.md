@@ -40,7 +40,7 @@ Owen owns the shared platform the rest of us plug into: the template, the GCP pr
 ```
 Browser (React)
   |  HTTPS
-Caddy proxy ── /      -> frontend (nginx, :3000)
+Caddy proxy ── /      -> frontend (Node SSR, :3000)
             └─ /api   -> api-gateway (FastAPI, :8000)
                            ├─ cv-service   (FastAPI + PyTorch CPU, :8001)
                            ├─ llm-service  (vLLM / transformers + LoRA, GPU, :8002)
