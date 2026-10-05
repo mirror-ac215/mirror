@@ -33,6 +33,29 @@ cd mirror
 docker compose -f infra/compose.yml up --build   # available from MS2
 ```
 
+## Data setup with DVC
+
+Raw datasets are versioned with DVC, while the actual content is stored in the team's GCS bucket. Raw data is never committed to Git.
+
+After cloning, authenticate once for DVC's GCS backend, then retrieve the tracked dataset version:
+
+```bash
+gcloud auth application-default login
+dvc pull
+```
+
+`dvc pull` restores these required raw inputs:
+
+```text
+data/raw/fer2013/archive.zip
+data/raw/persona/jbp_clean_full.csv
+data/raw/persona/jbp_train.csv
+data/raw/persona/jbp_val.csv
+data/raw/persona/jbp_test.csv
+```
+
+The DVC remote is `mirror_gcs` at `gs://mirror-ac215-data/dvc`. Do not run `git add data/`; commit only the DVC configuration and `.dvc` metadata files.
+
 ## How we work
 
 - **One task, one branch, one pull request.** Name the branch `<initials>/<task-id>-short-name`, for example `mg/M1-03-repo-skeleton`.
