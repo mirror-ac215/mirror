@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
+      api_gateway: ${{ steps.filter.outputs.api_gateway }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,6 +27,9 @@ jobs:
             service_template:
               - 'services/_template/**'
               - '.github/workflows/**'
+            api_gateway:
+              - 'services/api-gateway/**'
+              - '.github/workflows/**'
 
   service_template:
     name: Service template checks
@@ -36,9 +40,18 @@ jobs:
       service_path: services/_template
       image_name: mirror-service-template-ci
 
+  api_gateway:
+    name: API gateway checks
+    needs: changes
+    if: needs.changes.outputs.api_gateway == 'true'
+    uses: ./.github/workflows/python-service-ci.yml
+    with:
+      service_path: services/api-gateway
+      image_name: mirror-api-gateway-ci
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template]
+    needs: [changes, service_template, api_gateway]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -47,6 +60,8 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           SERVICE_TEMPLATE_CHANGED: ${{ needs.changes.outputs.service_template }}
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
+          API_GATEWAY_CHANGED: ${{ needs.changes.outputs.api_gateway }}
+          API_GATEWAY_RESULT: ${{ needs.api_gateway.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
@@ -55,6 +70,11 @@ jobs:
 
           if [ "$SERVICE_TEMPLATE_CHANGED" = "true" ] && [ "$SERVICE_TEMPLATE_RESULT" != "success" ]; then
             echo "Service template checks did not pass: $SERVICE_TEMPLATE_RESULT"
+            exit 1
+          fi
+
+          if [ "$API_GATEWAY_CHANGED" = "true" ] && [ "$API_GATEWAY_RESULT" != "success" ]; then
+            echo "API gateway checks did not pass: $API_GATEWAY_RESULT"
             exit 1
           fi
 
