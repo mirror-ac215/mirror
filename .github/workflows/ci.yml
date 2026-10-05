@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
+      data_preprocess: ${{ steps.filter.outputs.data_preprocess }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4.1.7
-
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v3.0.2
@@ -25,6 +25,10 @@ jobs:
           filters: |
             service_template:
               - 'services/_template/**'
+              - '.github/workflows/**'
+            data_preprocess:
+              - 'pipelines/data-preprocess/**'
+              - 'dvc.yaml'
               - '.github/workflows/**'
 
   service_template:
@@ -36,9 +40,18 @@ jobs:
       service_path: services/_template
       image_name: mirror-service-template-ci
 
+  data_preprocess:
+    name: Data preprocess checks
+    needs: changes
+    if: needs.changes.outputs.data_preprocess == 'true'
+    uses: ./.github/workflows/python-service-ci.yml
+    with:
+      service_path: pipelines/data-preprocess
+      image_name: mirror-data-preprocess-ci
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template]
+    needs: [changes, service_template, data_preprocess]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -47,15 +60,19 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           SERVICE_TEMPLATE_CHANGED: ${{ needs.changes.outputs.service_template }}
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
+          DATA_PREPROCESS_CHANGED: ${{ needs.changes.outputs.data_preprocess }}
+          DATA_PREPROCESS_RESULT: ${{ needs.data_preprocess.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
             exit 1
           fi
-
           if [ "$SERVICE_TEMPLATE_CHANGED" = "true" ] && [ "$SERVICE_TEMPLATE_RESULT" != "success" ]; then
             echo "Service template checks did not pass: $SERVICE_TEMPLATE_RESULT"
             exit 1
           fi
-
+          if [ "$DATA_PREPROCESS_CHANGED" = "true" ] && [ "$DATA_PREPROCESS_RESULT" != "success" ]; then
+            echo "Data preprocess checks did not pass: $DATA_PREPROCESS_RESULT"
+            exit 1
+          fi
           echo "All CI checks required for this pull request passed."
