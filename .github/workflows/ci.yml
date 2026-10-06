@@ -15,6 +15,7 @@ jobs:
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
       db: ${{ steps.filter.outputs.db }}
+      docs_contracts: ${{ steps.filter.outputs.docs_contracts }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +30,9 @@ jobs:
               - '.github/workflows/**'
             db:
               - 'services/db/**'
+              - '.github/workflows/**'
+            docs_contracts:
+              - 'docs/contracts/**'
               - '.github/workflows/**'
 
   service_template:
@@ -52,9 +56,38 @@ jobs:
       - name: Run database container integration test
         run: bash services/db/tests/test_database.sh
 
+  contract_validation:
+    name: Contract validation
+    needs: changes
+    if: needs.changes.outputs.docs_contracts == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs/contracts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Validate shared contracts
+        run: uv run python validate.py
+
+      - name: Run validator tests
+        run: uv run pytest -v
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, db]
+    needs: [changes, service_template, db, contract_validation]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +98,8 @@ jobs:
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
           DB_CHANGED: ${{ needs.changes.outputs.db }}
           DB_RESULT: ${{ needs.db.result }}
+          DOCS_CONTRACTS_CHANGED: ${{ needs.changes.outputs.docs_contracts }}
+          CONTRACT_VALIDATION_RESULT: ${{ needs.contract_validation.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
@@ -78,6 +113,11 @@ jobs:
 
           if [ "$DB_CHANGED" = "true" ] && [ "$DB_RESULT" != "success" ]; then
             echo "Database integration checks did not pass: $DB_RESULT"
+            exit 1
+          fi
+
+          if [ "$DOCS_CONTRACTS_CHANGED" = "true" ] && [ "$CONTRACT_VALIDATION_RESULT" != "success" ]; then
+            echo "Contract validation did not pass: $CONTRACT_VALIDATION_RESULT"
             exit 1
           fi
 
