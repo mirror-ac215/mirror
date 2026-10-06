@@ -2,6 +2,12 @@
 
 One page to understand the system. Details live in the contracts linked below.
 
+> **Target versus current `main`:** This diagram is the intended integration
+> design, not proof that all components are already merged or running. Verify
+> current implementation from `main`; component pull requests remain unmerged
+> until reviewed and merged. In particular, Compose, deployment, E2E, load
+> testing, and several service implementations are staged work.
+
 ## Components
 
 ```mermaid

@@ -24,13 +24,18 @@ Start with [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md). It covers:
 - the API contracts;
 - our conventions.
 
-## Quick start (fills in as services land)
+## Quick start
+
+The full Compose stack is **planned for M2-03** and is not yet present in
+`main`. Until `infra/compose.yml` is merged, use each component's own README
+and pull request validation instructions rather than treating this command as
+a fresh-clone acceptance path.
 
 ```bash
 git clone https://github.com/mirror-ac215/mirror.git
 cd mirror
-# get the secrets described in secrets/README.md
-docker compose -f infra/compose.yml up --build   # available from MS2
+# After M2-03 merges, get the secrets described in secrets/README.md
+docker compose -f infra/compose.yml up --build
 ```
 
 ## Data setup with DVC
