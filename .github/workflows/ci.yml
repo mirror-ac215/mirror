@@ -15,6 +15,7 @@ jobs:
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
       api_gateway: ${{ steps.filter.outputs.api_gateway }}
+      db: ${{ steps.filter.outputs.db }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +30,9 @@ jobs:
               - '.github/workflows/**'
             api_gateway:
               - 'services/api-gateway/**'
+              - '.github/workflows/**'
+            db:
+              - 'services/db/**'
               - '.github/workflows/**'
 
   service_template:
@@ -49,9 +53,21 @@ jobs:
       service_path: services/api-gateway
       image_name: mirror-api-gateway-ci
 
+  db:
+    name: Database integration checks
+    needs: changes
+    if: needs.changes.outputs.db == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run database container integration test
+        run: bash services/db/tests/test_database.sh
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, api_gateway]
+    needs: [changes, service_template, api_gateway, db]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -62,6 +78,8 @@ jobs:
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
           API_GATEWAY_CHANGED: ${{ needs.changes.outputs.api_gateway }}
           API_GATEWAY_RESULT: ${{ needs.api_gateway.result }}
+          DB_CHANGED: ${{ needs.changes.outputs.db }}
+          DB_RESULT: ${{ needs.db.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
@@ -75,6 +93,11 @@ jobs:
 
           if [ "$API_GATEWAY_CHANGED" = "true" ] && [ "$API_GATEWAY_RESULT" != "success" ]; then
             echo "API gateway checks did not pass: $API_GATEWAY_RESULT"
+            exit 1
+          fi
+
+          if [ "$DB_CHANGED" = "true" ] && [ "$DB_RESULT" != "success" ]; then
+            echo "Database integration checks did not pass: $DB_RESULT"
             exit 1
           fi
 
