@@ -91,6 +91,11 @@ fi
 
 run_sql "INSERT INTO review_flags (patient_id, message_id, reviewed_at, reviewed_by) VALUES ('00000000-0000-0000-0000-000000000201', '00000000-0000-0000-0000-000000000401', now(), '00000000-0000-0000-0000-000000000101');" >/dev/null
 
+if run_sql "DELETE FROM messages WHERE id = '00000000-0000-0000-0000-000000000401';" >/dev/null 2>&1; then
+  echo "FAIL: a flagged message was deleted without first removing its review flag." >&2
+  exit 1
+fi
+
 if run_sql "INSERT INTO review_flags (patient_id, message_id, reviewed_at, reviewed_by) VALUES ('00000000-0000-0000-0000-000000000201', '00000000-0000-0000-0000-000000000401', now(), '00000000-0000-0000-0000-000000000102');" >/dev/null 2>&1; then
   echo "FAIL: unassigned clinician was accepted as a review-flag reviewer." >&2
   exit 1
@@ -117,5 +122,10 @@ if run_sql "UPDATE sessions SET patient_id = '00000000-0000-0000-0000-0000000002
   echo "FAIL: session ownership change broke an existing review flag." >&2
   exit 1
 fi
+
+run_sql "DELETE FROM users WHERE id = '00000000-0000-0000-0000-000000000201';" >/dev/null
+assert_equals "0" "$(run_sql "SELECT count(*) FROM patients WHERE user_id = '00000000-0000-0000-0000-000000000201';")" "deleted patient profile"
+assert_equals "0" "$(run_sql "SELECT count(*) FROM messages WHERE id = '00000000-0000-0000-0000-000000000401';")" "deleted patient message"
+assert_equals "0" "$(run_sql "SELECT count(*) FROM review_flags WHERE message_id = '00000000-0000-0000-0000-000000000401';")" "deleted patient review flag"
 
 echo "PASS: database schema, seeds, health check, and constraints verified."

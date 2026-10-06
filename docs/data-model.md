@@ -96,6 +96,7 @@ erDiagram
 | Review-flag ownership trigger | A flagged message must belong to a session for the same patient named by the review flag. |
 | Session-owner-change trigger | A session cannot change patient ownership after one of its messages has a review flag. |
 | Flagged-message-move trigger | A flagged message cannot move to a session belonging to a different patient. |
+| Flagged-message deletion rule | A review flag prevents deletion of its triggering message on its own. Deleting a patient cascades through the patient-owned records, including sessions, messages, and review flags, so the full patient deletion succeeds without leaving an orphaned flag. |
 | No raw-frame table | Enforces the project rule that raw webcam data is never persisted. |
 
 ## Seed data
