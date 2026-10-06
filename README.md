@@ -24,14 +24,42 @@ Start with [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md). It covers:
 - the API contracts;
 - our conventions.
 
-## Quick start (fills in as services land)
+## Quick start
+
+The full Compose stack is **planned for M2-03** and is not yet present in
+`main`. Until `infra/compose.yml` is merged, use each component's own README
+and pull request validation instructions rather than treating this command as
+a fresh-clone acceptance path.
 
 ```bash
 git clone https://github.com/mirror-ac215/mirror.git
 cd mirror
-# get the secrets described in secrets/README.md
-docker compose -f infra/compose.yml up --build   # available from MS2
+# After M2-03 merges, get the secrets described in secrets/README.md
+docker compose -f infra/compose.yml up --build
 ```
+
+## Data setup with DVC
+
+Raw datasets are versioned with DVC, while the actual content is stored in the team's GCS bucket. Raw data is never committed to Git.
+
+After cloning, authenticate once for DVC's GCS backend, then retrieve the tracked dataset version:
+
+```bash
+gcloud auth application-default login
+dvc pull
+```
+
+`dvc pull` restores these required raw inputs:
+
+```text
+data/raw/fer2013/archive.zip
+data/raw/persona/jbp_clean_full.csv
+data/raw/persona/jbp_train.csv
+data/raw/persona/jbp_val.csv
+data/raw/persona/jbp_test.csv
+```
+
+The DVC remote is `mirror_gcs` at `gs://mirror-ac215-data/dvc`. Do not run `git add data/`; commit only the DVC configuration and `.dvc` metadata files.
 
 ## How we work
 
