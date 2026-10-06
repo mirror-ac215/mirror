@@ -6,6 +6,22 @@ Paste this file at the start of any LLM session, followed by your own `brief_<na
 
 Mirror is a prototype web app for AC215 (Harvard, Fall 2026), not a clinical product. A patient chats with a direct, supportive persona. If the patient consents, their webcam feeds a facial-expression model, and the emotional tone of their text is scored too. Both signals are combined into **one bounded, uncertainty-labelled context object per chat turn**, and that object shapes the persona's reply. A clinician dashboard shows each patient's affect trend across sessions and a "needs review" marker.
 
+## Implementation-status rule
+
+This document describes the **target architecture and shared contracts**. It
+does not mean that every pictured service, Compose configuration, deployment
+asset, or test is already merged into `main`. Treat the repository's default
+branch as the implementation source of truth and open pull requests as
+unmerged work. At the current foundation stage, `main` contains the contracts,
+reusable Python template, shared CI foundation, DVC metadata, and artifact
+inventory; service implementations, Compose integration, deployment, E2E, and
+load testing land through their own reviewed pull requests.
+
+When a component PR merges, update its README, lockfile/runtime declaration,
+Docker and CI handoff, and the relevant contract or documentation in the same
+delivery cycle. This keeps the target diagram from being mistaken for a
+statement that the complete product is already runnable.
+
 **Safety rule:** a deterministic check on the patient's *text* runs before the LLM. When it fires, it shows crisis resources (988), withholds the persona reply, and sets a review flag. The face model never triggers it. There are no real-time alerts and no emergency automation.
 
 Inherited assets:
@@ -40,7 +56,7 @@ Owen owns the shared platform the rest of us plug into: the template, the GCP pr
 ```
 Browser (React)
   |  HTTPS
-Caddy proxy ── /      -> frontend (nginx, :3000)
+Caddy proxy ── /      -> frontend (Node/Nitro SSR, :3000)
             └─ /api   -> api-gateway (FastAPI, :8000)
                            ├─ cv-service   (FastAPI + PyTorch CPU, :8001)
                            ├─ llm-service  (vLLM / transformers + LoRA, GPU, :8002)
@@ -127,7 +143,7 @@ mirror/
   services/api-gateway/      orchestrator; modules: safety/, text_emotion/, gating/, fusion/
   services/cv-service/
   services/llm-service/
-  services/db/               init.sql, seed.sh
+  services/db/               init.sql, seed.sh, entrypoint-wrapper.sh
   pipelines/data-preprocess/ pipelines/persona-data/ pipelines/cv-train/
   pipelines/fairness-audit/  pipelines/llm-finetune/  pipelines/llm-eval/
   infra/compose.yml  infra/caddy/  infra/monitoring/  infra/pulumi/ (optional)
