@@ -104,6 +104,8 @@ paths:
                 required: [visual_status]
                 properties:
                   visual_status: { type: string, enum: [ok, uncertain, dropped, camera_off] }
+        "401": { description: Not logged in or token is invalid }
+        "403": { description: Not the patient who owns this session }
         "404": { description: Unknown session }
         "409": { description: Camera consent was not given for this session }
 
@@ -146,6 +148,8 @@ paths:
           content:
             text/event-stream:
               schema: { type: string }
+        "401": { description: Not logged in or token is invalid }
+        "403": { description: Not the patient who owns this session }
         "404": { description: Unknown session }
 
   /clinician/patients:

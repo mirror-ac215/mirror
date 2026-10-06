@@ -14,10 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
+      db: ${{ steps.filter.outputs.db }}
       data_preprocess: ${{ steps.filter.outputs.data_preprocess }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -25,6 +27,9 @@ jobs:
           filters: |
             service_template:
               - 'services/_template/**'
+              - '.github/workflows/**'
+            db:
+              - 'services/db/**'
               - '.github/workflows/**'
             data_preprocess:
               - 'pipelines/data-preprocess/**'
@@ -40,6 +45,18 @@ jobs:
       service_path: services/_template
       image_name: mirror-service-template-ci
 
+  db:
+    name: Database integration checks
+    needs: changes
+    if: needs.changes.outputs.db == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run database container integration test
+        run: bash services/db/tests/test_database.sh
+
   data_preprocess:
     name: Data preprocess checks
     needs: changes
@@ -51,7 +68,7 @@ jobs:
 
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, data_preprocess]
+    needs: [changes, service_template, db, data_preprocess]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -60,6 +77,8 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           SERVICE_TEMPLATE_CHANGED: ${{ needs.changes.outputs.service_template }}
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
+          DB_CHANGED: ${{ needs.changes.outputs.db }}
+          DB_RESULT: ${{ needs.db.result }}
           DATA_PREPROCESS_CHANGED: ${{ needs.changes.outputs.data_preprocess }}
           DATA_PREPROCESS_RESULT: ${{ needs.data_preprocess.result }}
         run: |
@@ -67,12 +86,20 @@ jobs:
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
             exit 1
           fi
+
           if [ "$SERVICE_TEMPLATE_CHANGED" = "true" ] && [ "$SERVICE_TEMPLATE_RESULT" != "success" ]; then
             echo "Service template checks did not pass: $SERVICE_TEMPLATE_RESULT"
             exit 1
           fi
+
+          if [ "$DB_CHANGED" = "true" ] && [ "$DB_RESULT" != "success" ]; then
+            echo "Database integration checks did not pass: $DB_RESULT"
+            exit 1
+          fi
+
           if [ "$DATA_PREPROCESS_CHANGED" = "true" ] && [ "$DATA_PREPROCESS_RESULT" != "success" ]; then
             echo "Data preprocess checks did not pass: $DATA_PREPROCESS_RESULT"
             exit 1
           fi
+
           echo "All CI checks required for this pull request passed."
