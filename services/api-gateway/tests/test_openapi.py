@@ -13,12 +13,13 @@ from app.main import app
 # tests/ -> api-gateway/ -> services/ -> repo root
 CONTRACT = Path(__file__).parents[3] / "docs" / "contracts" / "api-gateway.openapi.yaml"
 
-# Endpoints the v0 gateway implements and protects.
-CHECKED = [
-    ("post", "/sessions"),
-    ("post", "/sessions/{session_id}/frames"),
-    ("post", "/sessions/{session_id}/messages"),
-]
+# The complete set of response codes each v0 endpoint must document.
+# FastAPI adds 422 (validation error) automatically, so it is ignored below.
+EXPECTED_CODES = {
+    ("post", "/sessions"): {"201", "401", "403"},
+    ("post", "/sessions/{session_id}/frames"): {"202", "401", "403", "404", "409"},
+    ("post", "/sessions/{session_id}/messages"): {"200", "401", "403", "404"},
+}
 
 
 def load_contract() -> dict:
@@ -28,7 +29,7 @@ def load_contract() -> dict:
 def test_responses_match_contract():
     contract = load_contract()
     generated = app.openapi()
-    for method, path in CHECKED:
+    for method, path in EXPECTED_CODES:
         expected = contract["paths"][path][method]["responses"]
         actual = generated["paths"][path][method]["responses"]
         for code, response in expected.items():
@@ -45,3 +46,12 @@ def test_security_scheme_name_matches_contract():
     assert set(generated["components"]["securitySchemes"]) == set(
         contract["components"]["securitySchemes"]
     )
+
+def test_response_codes_are_exactly_as_expected():
+    contract = load_contract()
+    generated = app.openapi()
+    for (method, path), expected in EXPECTED_CODES.items():
+        in_contract = set(contract["paths"][path][method]["responses"])
+        in_docs = set(generated["paths"][path][method]["responses"]) - {"422"}
+        assert in_contract == expected, f"{path}: contract has {in_contract}"
+        assert in_docs == expected, f"{path}: /docs has {in_docs}"

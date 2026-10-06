@@ -42,9 +42,9 @@ async def add_request_id(request: Request, call_next):
 @app.get("/health")
 async def health() -> dict[str, object]:
     """Gateway is alive; each dependency is reported separately (contract:/health)."""
-    dependecies = await check_dependencies(settings)
-    status = "ok" if all(state == "ok" for state in dependecies.values()) else "degraded"
-    return {"status": status, "dependencies": dependecies}
+    dependencies = await check_dependencies(settings)
+    status = "ok" if all(state == "ok" for state in dependencies.values()) else "degraded"
+    return {"status": status, "dependencies": dependencies}
 
 
 
