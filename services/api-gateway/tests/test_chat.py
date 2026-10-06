@@ -3,6 +3,7 @@ import json
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.chat import settings
 from app.main import app
 
 PATIENT = {"Authorization": "Bearer dev-patient-token"}
@@ -53,6 +54,18 @@ async def test_frame_accepted_202_only_with_consent() -> None:
     assert ok.json() == {"visual_status": "ok"}
     assert conflict.status_code == 409
     assert unknown.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_frame_rejects_non_jpeg_415_and_oversized_413() -> None:
+    png = {"image": ("frame.png", b"fake-png-bytes", "image/png")}
+    too_big = {"image": ("big.jpg", b"x" * (settings.max_frame_bytes + 1), "image/jpeg")}
+    async with client() as c:
+        session_id = await new_session(c, consent=True)
+        wrong_type = await c.post(f"/sessions/{session_id}/frames", files=png, headers=PATIENT)
+        oversized = await c.post(f"/sessions/{session_id}/frames", files=too_big, headers=PATIENT)
+    assert wrong_type.status_code == 415
+    assert oversized.status_code == 413
 
 
 @pytest.mark.anyio

@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.auth import demo_login, require_patient
+from app.config import Settings
 from app.schemas import (
     FrameAck,
     LoginRequest,
@@ -25,6 +26,9 @@ from app.schemas import (
 
 # APIRouter groups related endpoints in their own file, which keeps main.py small. Main then plus in the router
 router = APIRouter()
+
+# Reads env vars (e.g. MAX_FRAME_BYTES), falling back to config.py defaults.
+settings = Settings()
 
 # In-memory store, lost on restart. The database replaces this later (M3-10).
 sessions: dict[str, Session] = {}
@@ -77,13 +81,24 @@ def start_session(body: SessionCreate) -> Session:
         403: {"description": "Patients only"},
         404: {"description": "Unknown session"},
         409: {"description": "Camera consent not given"},
+        413: {"description": "Frame too large"},
+        415: {"description": "Unsupported Media Type"},
     },
 )
 async def receive_frame(session_id: str, image: UploadFile) -> FrameAck:
     session = get_session(session_id)
     if not session.camera_consent:
         raise HTTPException(status_code=409, detail="Camera consent was not given")
-    await image.read()  # v0: read and discard. Frames are never stored.
+
+    # Guard 1: only JPEG frames
+    if image.content_type != "image/jpeg":
+        raise HTTPException(status_code=415, detail="Frame must be JPEG")
+
+    # Guard 2: bounded read. Read at most one byte past the limit, so a huge
+    # upload can't fill the gateway's memory. Frames are still never stored.
+    data = await image.read(settings.max_frame_bytes + 1)
+    if len(data) > settings.max_frame_bytes:
+        raise HTTPException(status_code=413, detail="Frame too large")
     return FrameAck(visual_status="ok")
 
 

@@ -18,10 +18,10 @@ Interactive API docs: http://localhost:8000/docs. Click **Authorize** and enter 
 | `GET /health` | `ok` / `degraded` + each dependency (`cv-service`, `llm-service`, `db`); always 200 so Docker doesn't restart the gateway when a dependency is down |
 | `POST /auth/login` | demo token; any email containing "clinician" logs in as clinician (real auth: M4-02) |
 | `POST /sessions` | 201, in-memory session (database: MS3) |
-| `POST /sessions/{id}/frames` | 202; frame read and discarded, never stored; 409 without camera consent |
+| `POST /sessions/{id}/frames` | 202; frame read and discarded, never stored; 409 without camera consent; 415 if not JPEG; 413 if larger than MAX_FRAME_BYTES |
 | `POST /sessions/{id}/messages` | Server-Sent Events: `token` events (`{"text": ...}`) then `done` |
 
-Errors: 401 no/invalid token, 403 wrong role, 404 unknown session, 409 no camera consent, 422 malformed request.
+Errors: 401 no/invalid token, 403 wrong role, 404 unknown session, 409 no camera consent, 413 frame too large, 415 not a JPEG, 422 malformed request.
 
 ## Configuration (environment variables)
 
@@ -33,6 +33,7 @@ Errors: 401 no/invalid token, 403 wrong role, 404 unknown session, 409 no camera
 | `LLM_SERVICE_URL` | `http://llm-service:8002` |
 | `DB_HOST` / `DB_PORT` | `db` / `5432` |
 | `DEPENDENCY_TIMEOUT_S` | `2.0` |
+| `MAX_FRAME_BYTES` | `1000000` |
 | `CORS_ORIGINS` | `["http://localhost:3000","http://localhost:8080"]` |
 
 Defaults use docker-compose service names. No secrets needed in v0. All variables are listed in `.env.example`; copy it to `.env` only for local overrides (never commit `.env`).

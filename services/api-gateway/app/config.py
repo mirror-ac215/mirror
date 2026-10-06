@@ -16,5 +16,10 @@ class Settings(BaseSettings):
     db_host: str = "db"
     db_port: int = 5432
     dependency_timeout_s: float = 2.0
+
+    # Biggest camera frame we accept. The frontend sends small downscaled JPEGs
+    # (tens of KB), so 1 MB is generous; anything larger is rejected with 413.
+    max_frame_bytes: int = 1_000_000
+
     # Browser origins allowed to call the gateway (frontend dev server and container).
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8080"]
