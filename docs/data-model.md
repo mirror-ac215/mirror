@@ -20,7 +20,7 @@ erDiagram
     SESSIONS ||--o{ EMOTION_WINDOWS : "summarizes"
     PATIENTS ||--o{ REVIEW_FLAGS : "has"
     MESSAGES ||--o{ REVIEW_FLAGS : "triggers"
-    USERS ||--o{ REVIEW_FLAGS : "reviews"
+    USERS o|--o{ REVIEW_FLAGS : "reviews"
 
     USERS {
         uuid id PK
@@ -31,7 +31,7 @@ erDiagram
         timestamptz created_at
     }
     PATIENTS {
-        uuid user_id PK_FK
+        uuid user_id PK, FK
         uuid clinician_id FK
     }
     SESSIONS {
