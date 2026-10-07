@@ -49,6 +49,22 @@ def test_ci_runs_contract_validation_and_fails_closed_when_contracts_change() ->
     assert 'exit 1' in summary_script
 
 
+def test_contract_documentation_has_one_canonical_workflow() -> None:
+    repository_root = CONTRACTS_DIR.parents[1]
+    architecture = (repository_root / "docs" / "architecture.md").read_text(encoding="utf-8")
+    project_context = (repository_root / "docs" / "PROJECT_CONTEXT.md").read_text(
+        encoding="utf-8"
+    )
+    contract_readme = (CONTRACTS_DIR / "README.md").read_text(encoding="utf-8")
+
+    assert "contracts/README.md" in architecture
+    assert "uv run docs/contracts/validate.py" not in architecture
+    assert "uvx --from openapi-spec-validator" not in architecture
+    assert "cd docs/contracts\nuv run python validate.py" in contract_readme
+    assert "uvx --from openapi-spec-validator" not in contract_readme
+    assert "Run `uv` commands from that component's folder" in project_context
+
+
 def test_openapi_discovery_includes_a_future_contract_file(tmp_path, monkeypatch) -> None:
     spec = importlib.util.spec_from_file_location("contract_validate", CONTRACTS_DIR / "validate.py")
     assert spec and spec.loader
