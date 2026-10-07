@@ -155,17 +155,17 @@ mirror/
 
 ## Conventions
 
-**Environment and packages.** Each Python folder is its own uv project using Python 3.11, with `pyproject.toml` and `uv.lock` committed.
-- Set up after cloning with `uv sync`.
-- Run code with `uv run python ...`.
-- Add a package with `uv add <pkg>`.
+**Environment and packages.** Each Python folder is its own uv project using Python 3.11, with `pyproject.toml` and `uv.lock` committed. Run `uv` commands from that component's folder (for example, `services/llm-service` or `docs/contracts`), not from the repository root unless the command explicitly names a project.
+- Set up a component after cloning with `uv sync --frozen` in that component's folder.
+- Run component code with `uv run python ...` in that component's folder.
+- Add a package from that component's folder with `uv add <package>`; commit both its `pyproject.toml` and `uv.lock`.
 - Never use pip or conda in the project.
 
 **Config and secrets.** Configuration comes from environment variables via pydantic-settings. Commit `.env.example` and never `.env`. Secrets are mounted read-only from `secrets/`.
 
 **Services.** Every service exposes `GET /health` and `GET /metrics`, and writes JSON logs that carry `X-Request-ID`.
 
-**Tests and CI.** Tests use pytest. CI runs ruff, pytest and docker build on every PR, and the safety tests always run.
+**Tests and CI.** CI detects which component changed, then runs that component's required locked install, lint, test, and/or build checks. The stable `CI summary` fails if changed-path detection or an applicable check does not succeed. Formal contract changes run the contract validator and its tests; they do not require a service Docker build.
 
 **Git workflow.**
 - Branch name: `<initials>/<task-id>-short-name`.
