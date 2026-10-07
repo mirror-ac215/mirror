@@ -15,6 +15,7 @@ jobs:
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
       db: ${{ steps.filter.outputs.db }}
+      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,6 +30,9 @@ jobs:
               - '.github/workflows/**'
             db:
               - 'services/db/**'
+              - '.github/workflows/**'
+            frontend:
+              - 'services/frontend/**'
               - '.github/workflows/**'
 
   service_template:
@@ -52,9 +56,40 @@ jobs:
       - name: Run database container integration test
         run: bash services/db/tests/test_database.sh
 
+  frontend:
+    name: Frontend checks
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/frontend
+    steps:
+      - name: Check out reopsitory
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: services/frontend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Build Docker image
+        run: docker build -t mirror-frontend-ci .
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, db]
+    needs: [changes, service_template, db, frontend]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -65,6 +100,8 @@ jobs:
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
           DB_CHANGED: ${{ needs.changes.outputs.db }}
           DB_RESULT: ${{ needs.db.result }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
@@ -78,6 +115,11 @@ jobs:
 
           if [ "$DB_CHANGED" = "true" ] && [ "$DB_RESULT" != "success" ]; then
             echo "Database integration checks did not pass: $DB_RESULT"
+            exit 1
+          fi
+
+          if [ "$FRONTEND_CHANGED" = "true" ] && [ "$FRONTEND_RESULT" != "success" ]; then
+            echo "Frontend checks did not pass: $FRONTEND_RESULT"
             exit 1
           fi
 
