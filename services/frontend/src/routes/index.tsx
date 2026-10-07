@@ -94,9 +94,7 @@ function Login() {
             </div>
             <Button
               type="button"
-              onClick={() =>
-                navigate({ to: role === "patient" ? "/consent" : "/clinician" })
-              }
+              onClick={() => navigate({ to: role === "patient" ? "/consent" : "/clinician" })}
               className="brand-gradient h-11 w-full rounded-[11px] text-white shadow-soft hover:opacity-95"
             >
               Continue as {role}

@@ -1,0 +1,6 @@
+outs:
+- md5: a9bba215e80c5e7a55dccf508e81ac75.dir
+  size: 337232
+  nfiles: 4
+  hash: md5
+  path: data/raw/persona

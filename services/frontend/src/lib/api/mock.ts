@@ -30,14 +30,18 @@ export async function sendFrame(): Promise<FrameAck> {
   return { visual_status: "ok" };
 }
 
-export async function sendMessage(text: string, onEvent: (event: ChatEvent) => void): Promise<void> {
+export async function sendMessage(
+  text: string,
+  onEvent: (event: ChatEvent) => void,
+): Promise<void> {
   await wait(400);
 
   if (DEMO_CRISIS_WORDS.some((w) => text.toLowerCase().includes(w))) {
     onEvent({
       type: "crisis",
       data: {
-        message: "It sounds like you're going through something really painful. You don't have to face it alone.",
+        message:
+          "It sounds like you're going through something really painful. You don't have to face it alone.",
         resources: [{ name: "988 Suicide & Crisis Lifeline", contact: "call or text 988" }],
         review_flag_created: true,
       },
@@ -53,8 +57,22 @@ export async function sendMessage(text: string, onEvent: (event: ChatEvent) => v
   }
 
   const context: ContextObject = {
-    visual: { status: "ok", top2: [["sad", 0.46], ["neutral", 0.31]], stability: 0.8, window_s: 10, n_frames: 8 },
-    text: { top2: [["sadness", 0.71], ["neutral", 0.12]] },
+    visual: {
+      status: "ok",
+      top2: [
+        ["sad", 0.46],
+        ["neutral", 0.31],
+      ],
+      stability: 0.8,
+      window_s: 10,
+      n_frames: 8,
+    },
+    text: {
+      top2: [
+        ["sadness", 0.71],
+        ["neutral", 0.12],
+      ],
+    },
     agreement: "agree",
     tone_mode: "supportive",
     note: "Estimates of expression, not facts about feelings.",

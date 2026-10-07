@@ -38,9 +38,8 @@ function Consent() {
       <main className="mx-auto max-w-2xl px-5 py-14">
         <h1 className="font-serif text-3xl tracking-tight">Before we begin</h1>
         <p className="mt-3 max-w-xl text-[15px] text-body">
-          This session can use your camera to read your facial expression, so the
-          companion can respond with a little more awareness of how you're feeling.
-          It's entirely your choice.
+          This session can use your camera to read your facial expression, so the companion can
+          respond with a little more awareness of how you're feeling. It's entirely your choice.
         </p>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-soft">
@@ -52,8 +51,7 @@ function Consent() {
               <div>
                 <p className="text-sm font-medium text-ink">Camera access</p>
                 <p className="mt-1 text-sm text-muted-ink">
-                  Used only during this session to estimate expression. Nothing is
-                  recorded.
+                  Used only during this session to estimate expression. Nothing is recorded.
                 </p>
               </div>
             </div>
@@ -63,8 +61,7 @@ function Consent() {
           <div className="mt-6 space-y-3 border-t border-border pt-6 text-sm text-muted-ink">
             <p className="flex gap-2.5">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-ink" />
-              Expression readings stay on this device and are summarised, never stored
-              as video.
+              Expression readings stay on this device and are summarised, never stored as video.
             </p>
             <p className="flex gap-2.5">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-ink" />

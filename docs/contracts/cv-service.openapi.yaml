@@ -1,0 +1,79 @@
+openapi: 3.1.0
+info:
+  title: Mirror cv-service
+  version: 0.1.0
+  description: >
+    Facial-expression inference. Takes one webcam frame, returns 7-class
+    expression probabilities. Called only by the api-gateway. Frames are
+    never stored.
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [ok] }
+
+  /predict:
+    post:
+      summary: Predict facial expression for one frame
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  contentMediaType: image/jpeg
+                  description: One downscaled JPEG frame
+      responses:
+        "200":
+          description: Prediction (face_found=false means no face was detected)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Prediction" }
+        "422":
+          description: Missing or unreadable image
+
+components:
+  schemas:
+    Prediction:
+      description: >
+        When face_found is false there is no visual signal: probs = {}, top2 = [],
+        margin = null, uncertain = null. This is different from uncertain = true,
+        which means a face was seen but the prediction is weak.
+      type: object
+      required: [face_found, probs, top2, margin, uncertain, model_version, latency_ms]
+      properties:
+        face_found: { type: boolean }
+        probs:
+          type: object
+          description: Probability per class; sums to ~1. Empty when face_found is false.
+          additionalProperties: { type: number, minimum: 0, maximum: 1 }
+          example: { angry: 0.03, disgust: 0.01, fear: 0.05, happy: 0.10, neutral: 0.31, sad: 0.46, surprise: 0.04 }
+        top2:
+          type: array
+          maxItems: 2
+          items:
+            type: array
+            prefixItems: [{ type: string }, { type: number }]
+          example: [["sad", 0.46], ["neutral", 0.31]]
+        margin:
+          type: [number, "null"]
+          description: top-1 probability minus top-2 probability; null when face_found is false
+        uncertain:
+          type: [boolean, "null"]
+          description: true when margin is below the service threshold; null when face_found is false
+        model_version: { type: string, example: cv-vit-b16-v3 }
+        latency_ms: { type: number }

@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TopNav } from "@/components/mirror/TopNav";
 import { seededChat } from "@/lib/mirror-data";
@@ -51,7 +46,10 @@ function Session() {
   useEffect(() => setRole("patient"), []);
   // Start a session with the gateway (or the mock) when the screen opens.
   useEffect(() => {
-    api.startSession(true).then((s) => setSessionId(s.session_id)).catch(() => setSessionId(null));
+    api
+      .startSession(true)
+      .then((s) => setSessionId(s.session_id))
+      .catch(() => setSessionId(null));
   }, []);
 
   useEffect(() => {
@@ -73,7 +71,7 @@ function Session() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
-    const send = async () => {
+  const send = async () => {
     const text = draft.trim();
     if (!text || !sessionId || sending) return;
     setDraft("");
@@ -241,17 +239,16 @@ function Session() {
             You don't have to go through this alone
           </DialogTitle>
           <DialogDescription className="text-sm leading-relaxed text-body">
-            If you're in crisis or thinking about harming yourself, support is available
-            any time. You can call or text 988 (US) to reach the Suicide &amp; Crisis
-            Lifeline.
+            If you're in crisis or thinking about harming yourself, support is available any time.
+            You can call or text 988 (US) to reach the Suicide &amp; Crisis Lifeline.
           </DialogDescription>
           <Button className="mt-1 h-11 w-full rounded-[11px] bg-safety text-white hover:bg-safety/90 sm:w-auto sm:self-start sm:px-6">
             <LifeBuoy className="h-4 w-4" />
             Call or text 988
           </Button>
           <p className="text-xs leading-relaxed text-muted-ink">
-            Your clinician has been gently notified so they can check in with you. You're
-            not in any trouble.
+            Your clinician has been gently notified so they can check in with you. You're not in any
+            trouble.
           </p>
         </DialogContent>
       </Dialog>

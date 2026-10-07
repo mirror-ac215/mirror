@@ -12,13 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { TopNav } from "@/components/mirror/TopNav";
-import {
-  moodTrend,
-  patients,
-  recentSessions,
-  toneClass,
-  toneLabel,
-} from "@/lib/mirror-data";
+import { moodTrend, patients, recentSessions, toneClass, toneLabel } from "@/lib/mirror-data";
 import { setRole } from "@/lib/role";
 
 export const Route = createFileRoute("/clinician/$patientId")({
@@ -79,9 +73,7 @@ function PatientDashboard() {
         <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-              <p className="text-[11px] uppercase tracking-wider text-muted-ink">
-                {s.label}
-              </p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-ink">{s.label}</p>
               <p className="mt-2 text-xl font-semibold text-ink">{s.value}</p>
             </div>
           ))}
@@ -124,14 +116,7 @@ function PatientDashboard() {
                   dot={{ r: 3.5, fill: "#FFFFFF", stroke: "#6DA588", strokeWidth: 2 }}
                   activeDot={{ r: 6 }}
                 />
-                <ReferenceDot
-                  x="S7"
-                  y={0.11}
-                  r={6}
-                  fill="#CC8375"
-                  stroke="#CC8375"
-                  isFront
-                />
+                <ReferenceDot x="S7" y={0.11} r={6} fill="#CC8375" stroke="#CC8375" isFront />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -144,18 +129,16 @@ function PatientDashboard() {
               <div className="flex gap-3 rounded-xl bg-lowmood p-4">
                 <Leaf className="mt-0.5 h-4 w-4 shrink-0 text-safety" />
                 <p className="text-sm leading-relaxed text-body">
-                  <span className="font-medium text-safety">
-                    Elevated distress — Session 7.
-                  </span>{" "}
-                  Support resources were shared with the patient; a gentle human review
-                  is recommended.
+                  <span className="font-medium text-safety">Elevated distress — Session 7.</span>{" "}
+                  Support resources were shared with the patient; a gentle human review is
+                  recommended.
                 </p>
               </div>
               <div className="flex gap-3 rounded-xl bg-anxious p-4">
                 <Bell className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
                 <p className="text-sm leading-relaxed text-body">
-                  <span className="font-medium text-ink">Engagement dip.</span> Two
-                  shorter sessions this week. For context, no action required.
+                  <span className="font-medium text-ink">Engagement dip.</span> Two shorter sessions
+                  this week. For context, no action required.
                 </p>
               </div>
             </div>
