@@ -15,6 +15,8 @@ jobs:
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
       db: ${{ steps.filter.outputs.db }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      docs_contracts: ${{ steps.filter.outputs.docs_contracts }}
       data_preprocess: ${{ steps.filter.outputs.data_preprocess }}
     steps:
       - name: Check out repository
@@ -30,6 +32,12 @@ jobs:
               - '.github/workflows/**'
             db:
               - 'services/db/**'
+              - '.github/workflows/**'
+            frontend:
+              - 'services/frontend/**'
+              - '.github/workflows/**'
+            docs_contracts:
+              - 'docs/contracts/**'
               - '.github/workflows/**'
             data_preprocess:
               - 'pipelines/data-preprocess/**'
@@ -66,9 +74,69 @@ jobs:
       service_path: pipelines/data-preprocess
       image_name: mirror-data-preprocess-ci
 
+  frontend:
+    name: Frontend checks
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/frontend
+    steps:
+      - name: Check out reopsitory
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: services/frontend/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Build Docker image
+        run: docker build -t mirror-frontend-ci .
+
+  contract_validation:
+    name: Contract validation
+    needs: changes
+    if: needs.changes.outputs.docs_contracts == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs/contracts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Validate shared contracts
+        run: uv run python validate.py
+
+      - name: Run validator tests
+        run: uv run pytest -v
+
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, db, data_preprocess]
+    needs: [changes, service_template, db, data_preprocess, frontend, contract_validation]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -81,6 +149,10 @@ jobs:
           DB_RESULT: ${{ needs.db.result }}
           DATA_PREPROCESS_CHANGED: ${{ needs.changes.outputs.data_preprocess }}
           DATA_PREPROCESS_RESULT: ${{ needs.data_preprocess.result }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+          DOCS_CONTRACTS_CHANGED: ${{ needs.changes.outputs.docs_contracts }}
+          CONTRACT_VALIDATION_RESULT: ${{ needs.contract_validation.result }}
         run: |
           if [ "$CHANGES_RESULT" != "success" ]; then
             echo "Changed-component detection did not pass: $CHANGES_RESULT"
@@ -99,6 +171,16 @@ jobs:
 
           if [ "$DATA_PREPROCESS_CHANGED" = "true" ] && [ "$DATA_PREPROCESS_RESULT" != "success" ]; then
             echo "Data preprocess checks did not pass: $DATA_PREPROCESS_RESULT"
+            exit 1
+          fi
+
+          if [ "$FRONTEND_CHANGED" = "true" ] && [ "$FRONTEND_RESULT" != "success" ]; then
+            echo "Frontend checks did not pass: $FRONTEND_RESULT"
+            exit 1
+          fi
+
+          if [ "$DOCS_CONTRACTS_CHANGED" = "true" ] && [ "$CONTRACT_VALIDATION_RESULT" != "success" ]; then
+            echo "Contract validation did not pass: $CONTRACT_VALIDATION_RESULT"
             exit 1
           fi
 

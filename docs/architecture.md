@@ -51,9 +51,8 @@ If anything fails (camera off, cv-service down, low confidence, LLM timeout), th
 
 ## Checking the contracts
 
-```bash
-uv run docs/contracts/validate.py
-uvx --from openapi-spec-validator openapi-spec-validator docs/contracts/<file>.openapi.yaml
-```
+The shared-contract setup and one-command validation workflow are documented in
+[`docs/contracts/README.md`](contracts/README.md). Use that page rather than
+copying validator commands into service documentation.
 
 Changing a contract needs approval from every owner it affects.
