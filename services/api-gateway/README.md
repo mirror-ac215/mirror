@@ -29,7 +29,7 @@ Or get the token from `POST /auth/login` with one of these emails and the demo p
 | `POST /sessions/{id}/frames` | 202; frame read and discarded, never stored; 409 without camera consent; 415 if not JPEG; 413 if larger than MAX_FRAME_BYTES |
 | `POST /sessions/{id}/messages` | Server-Sent Events: `token` events (`{"text": ...}`) then `done` |
 
-Errors: 401 no/invalid token or wrong login, 403 wrong role, 404 unknown session, 409 no camera consent, 413 frame too large, 415 not a JPEG, 422 malformed request.
+Errors: 401 no/invalid token or wrong login, 403 wrong role or not your session, 404 unknown session, 409 no camera consent, 413 frame too large, 415 not a JPEG, 422 malformed request.
 
 ## Configuration (environment variables)
 

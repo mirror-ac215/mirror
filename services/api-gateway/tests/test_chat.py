@@ -8,6 +8,7 @@ from app.main import app
 
 PATIENT = {"Authorization": "Bearer dev-patient-token"}
 CLINICIAN = {"Authorization": "Bearer dev-clinician-token"}
+PATIENT_B = {"Authorization": "Bearer dev-patient-b-token"}
 FRAME = {"image": ("frame.jpg", b"fake-jpeg-bytes", "image/jpeg")}
 
 
@@ -117,3 +118,19 @@ async def test_message_streams_tokens_then_done() -> None:
     assert "text" in events[0][1]
     assert events[-1][0] == "done"
     assert events[-1][1]["context"]["tone_mode"] in ("coach", "supportive")
+
+
+@pytest.mark.anyio
+async def test_other_patient_gets_403_on_someone_elses_session() -> None:
+    async with client() as c:
+        alex_session = await new_session(c)  # created with PATIENT (Alex)
+        own_frame = await c.post(f"/sessions/{alex_session}/frames", files=FRAME, headers=PATIENT)
+        bri_frame = await c.post(
+            f"/sessions/{alex_session}/frames", files=FRAME, headers=PATIENT_B
+        )
+        bri_message = await c.post(
+            f"/sessions/{alex_session}/messages", json={"text": "hi"}, headers=PATIENT_B
+        )
+    assert own_frame.status_code == 202
+    assert bri_frame.status_code == 403
+    assert bri_message.status_code == 403
