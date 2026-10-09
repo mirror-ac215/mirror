@@ -2,6 +2,12 @@
 
 One page to understand the system. Details live in the contracts linked below.
 
+> **Target versus current `main`:** This diagram is the intended integration
+> design, not proof that all components are already merged or running. Verify
+> current implementation from `main`; component pull requests remain unmerged
+> until reviewed and merged. In particular, Compose, deployment, E2E, load
+> testing, and several service implementations are staged work.
+
 ## Components
 
 ```mermaid
@@ -45,9 +51,8 @@ If anything fails (camera off, cv-service down, low confidence, LLM timeout), th
 
 ## Checking the contracts
 
-```bash
-uv run docs/contracts/validate.py
-uvx --from openapi-spec-validator openapi-spec-validator docs/contracts/<file>.openapi.yaml
-```
+The shared-contract setup and one-command validation workflow are documented in
+[`docs/contracts/README.md`](contracts/README.md). Use that page rather than
+copying validator commands into service documentation.
 
 Changing a contract needs approval from every owner it affects.

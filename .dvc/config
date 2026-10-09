@@ -1,0 +1,4 @@
+[core]
+    remote = mirror_gcs
+['remote "mirror_gcs"']
+    url = gs://mirror-ac215-data/dvc

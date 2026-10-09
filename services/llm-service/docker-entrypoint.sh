@@ -30,6 +30,9 @@ case "$mode" in
       --port "${PORT:-8002}" \
       --enable-lora \
       --lora-modules "${SERVED_MODEL_NAME:-mirror-persona-v1}=${LORA_ADAPTER_PATH:-/models/adapter-v1}" \
+      --max-lora-rank "${MAX_LORA_RANK:-32}" \
+      --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION:-0.9}" \
+      --dtype "${DTYPE:-auto}" \
       --max-model-len "${MAX_MODEL_LEN:-2048}" \
       --max-num-seqs "${MAX_NUM_SEQS:-1}"
     ;;

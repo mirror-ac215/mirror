@@ -6,6 +6,22 @@ Paste this file at the start of any LLM session, followed by your own `brief_<na
 
 Mirror is a prototype web app for AC215 (Harvard, Fall 2026), not a clinical product. A patient chats with a direct, supportive persona. If the patient consents, their webcam feeds a facial-expression model, and the emotional tone of their text is scored too. Both signals are combined into **one bounded, uncertainty-labelled context object per chat turn**, and that object shapes the persona's reply. A clinician dashboard shows each patient's affect trend across sessions and a "needs review" marker.
 
+## Implementation-status rule
+
+This document describes the **target architecture and shared contracts**. It
+does not mean that every pictured service, Compose configuration, deployment
+asset, or test is already merged into `main`. Treat the repository's default
+branch as the implementation source of truth and open pull requests as
+unmerged work. At the current foundation stage, `main` contains the contracts,
+reusable Python template, shared CI foundation, DVC metadata, and artifact
+inventory; service implementations, Compose integration, deployment, E2E, and
+load testing land through their own reviewed pull requests.
+
+When a component PR merges, update its README, lockfile/runtime declaration,
+Docker and CI handoff, and the relevant contract or documentation in the same
+delivery cycle. This keeps the target diagram from being mistaken for a
+statement that the complete product is already runnable.
+
 **Safety rule:** a deterministic check on the patient's *text* runs before the LLM. When it fires, it shows crisis resources (988), withholds the persona reply, and sets a review flag. The face model never triggers it. There are no real-time alerts and no emergency automation.
 
 Inherited assets:
@@ -40,7 +56,7 @@ Owen owns the shared platform the rest of us plug into: the template, the GCP pr
 ```
 Browser (React)
   |  HTTPS
-Caddy proxy ── /      -> frontend (nginx, :3000)
+Caddy proxy ── /      -> frontend (Node/Nitro SSR, :3000)
             └─ /api   -> api-gateway (FastAPI, :8000)
                            ├─ cv-service   (FastAPI + PyTorch CPU, :8001)
                            ├─ llm-service  (vLLM / transformers + LoRA, GPU, :8002)
@@ -127,7 +143,7 @@ mirror/
   services/api-gateway/      orchestrator; modules: safety/, text_emotion/, gating/, fusion/
   services/cv-service/
   services/llm-service/
-  services/db/               init.sql, seed.sql
+  services/db/               init.sql, seed.sh, entrypoint-wrapper.sh
   pipelines/data-preprocess/ pipelines/persona-data/ pipelines/cv-train/
   pipelines/fairness-audit/  pipelines/llm-finetune/  pipelines/llm-eval/
   infra/compose.yml  infra/caddy/  infra/monitoring/  infra/pulumi/ (optional)
@@ -139,17 +155,17 @@ mirror/
 
 ## Conventions
 
-**Environment and packages.** Each Python folder is its own uv project using Python 3.11, with `pyproject.toml` and `uv.lock` committed.
-- Set up after cloning with `uv sync`.
-- Run code with `uv run python ...`.
-- Add a package with `uv add <pkg>`.
+**Environment and packages.** Each Python folder is its own uv project using Python 3.11, with `pyproject.toml` and `uv.lock` committed. Run `uv` commands from that component's folder (for example, `services/llm-service` or `docs/contracts`), not from the repository root unless the command explicitly names a project.
+- Set up a component after cloning with `uv sync --frozen` in that component's folder.
+- Run component code with `uv run python ...` in that component's folder.
+- Add a package from that component's folder with `uv add <package>`; commit both its `pyproject.toml` and `uv.lock`.
 - Never use pip or conda in the project.
 
 **Config and secrets.** Configuration comes from environment variables via pydantic-settings. Commit `.env.example` and never `.env`. Secrets are mounted read-only from `secrets/`.
 
 **Services.** Every service exposes `GET /health` and `GET /metrics`, and writes JSON logs that carry `X-Request-ID`.
 
-**Tests and CI.** Tests use pytest. CI runs ruff, pytest and docker build on every PR, and the safety tests always run.
+**Tests and CI.** CI detects which component changed, then runs that component's required locked install, lint, test, and/or build checks. The stable `CI summary` fails if changed-path detection or an applicable check does not succeed. Formal contract changes run the contract validator and its tests; they do not require a service Docker build.
 
 **Git workflow.**
 - Branch name: `<initials>/<task-id>-short-name`.

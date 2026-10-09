@@ -13,3 +13,24 @@ What we store in the team bucket `gs://mirror-ac215-data/`, where each file came
 | `data/raw/persona/*.csv` | Persona prompt/response pairs | <1 MB | extracted from public long-form interviews | 380 pairs: 304 train / 38 val / 38 test |
 
 Everything lives in `gs://mirror-ac215-data/`. Download with `gcloud storage cp gs://mirror-ac215-data/<path> .` (requires project access).
+
+## Processed FER-2013 v1 — pending repository integration
+
+The intended processed-data release is
+`data/processed/fer2013/v1/` in the team bucket. Its preprocessing code,
+manifests, deterministic split, and publication workflow are reviewed with
+M2-06 and become a `main` implementation fact only when that pull request is
+merged.
+
+The planned release layout is intentionally inspectable:
+
+```text
+images/{train,val,test}/<class>/<image>.png
+manifests/{train,val,test}.csv
+reports/data_report.json
+metadata/transform_spec.json
+```
+
+The preprocessing workflow distinguishes `dvc repro` (local, reproducible
+materialization) from an explicit publish operation to the versioned GCS
+prefix. This prevents an ordinary local rebuild from mutating shared storage.

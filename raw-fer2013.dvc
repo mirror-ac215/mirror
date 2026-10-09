@@ -1,0 +1,5 @@
+outs:
+- md5: 9f58794746ff496be12cf0bb2679e3d4
+  size: 63252113
+  hash: md5
+  path: data/raw/fer2013/archive.zip

@@ -83,6 +83,9 @@ The real-mode entrypoint uses:
 Qwen/Qwen2.5-3B-Instruct
 --enable-lora
 --lora-modules mirror-persona-v1=/models/adapter-v1
+--max-lora-rank 32
+--gpu-memory-utilization 0.9
+--dtype auto
 --max-model-len 2048
 --max-num-seqs 1
 ```
