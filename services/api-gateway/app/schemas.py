@@ -9,7 +9,9 @@ Role = Literal["patient", "clinician"]
 VisualStatus = Literal["ok", "uncertain", "dropped", "camera_off"]
 
 class LoginRequest(BaseModel):
-    email: str
+    # Simple shape check (something@something.something), so a malformed email gets 422.
+    # Not pydantic's EmailStr: it rejects the reserved .test domain our demo users use.
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     password: str
 
 class LoginResponse(BaseModel):

@@ -23,3 +23,7 @@ class Settings(BaseSettings):
 
     # Browser origins allowed to call the gateway (frontend dev server and container).
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8080"]
+
+    # Demo login password for all seeded users (same env var as services/db/seed.sh).
+    # Local development only; M4-02 replaces this with real password hashes.
+    mirror_demo_password: str = "mirror-demo"

@@ -48,9 +48,12 @@ def get_session(session_id: str) -> Session:
     return session
 
 
-@router.post("/auth/login")
+@router.post(
+    "/auth/login",
+    responses={401: {"description": "Wrong email or password"}},
+)
 def login(body: LoginRequest) -> LoginResponse:
-    return demo_login(body.email)
+    return demo_login(body.email, body.password)
 
 
 @router.post(
@@ -77,7 +80,7 @@ def start_session(body: SessionCreate) -> Session:
     status_code=202,
     dependencies=[Depends(require_patient)],
     responses={
-        401: {"description": "Not logged in"},
+        401: {"description": "Wrong email or password"},
         403: {"description": "Patients only"},
         404: {"description": "Unknown session"},
         409: {"description": "Camera consent not given"},

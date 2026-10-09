@@ -22,13 +22,41 @@ async def new_session(c: AsyncClient, consent: bool = True) -> str:
 
 
 @pytest.mark.anyio
-async def test_login_gives_role_and_token() -> None:
+async def test_login_gives_role_token_and_seeded_user_id() -> None:
     async with client() as c:
         response = await c.post(
-            "/auth/login", json={"email": "clinician@demo.org", "password": "x"}
+            "/auth/login",
+            json={"email": "clinician.ada@example.test", "password": settings.mirror_demo_password},
         )
     assert response.status_code == 200
     assert response.json()["role"] == "clinician"
+    assert response.json()["access_token"] == "dev-clinician-token"
+    assert response.json()["user_id"] == "00000000-0000-0000-0000-000000000101"
+
+
+@pytest.mark.anyio
+async def test_login_wrong_password_or_unknown_email_401() -> None:
+    async with client() as c:
+        wrong_password = await c.post(
+            "/auth/login",
+            json={"email": "clinician.ada@example.test", "password": "not-the-password"},
+        )
+        unknown_email = await c.post(
+            "/auth/login",
+            json={"email": "nobody@example.test", "password": settings.mirror_demo_password},
+        )
+    assert wrong_password.status_code == 401
+    assert unknown_email.status_code == 401
+
+
+@pytest.mark.anyio
+async def test_login_malformed_email_422() -> None:
+    async with client() as c:
+        response = await c.post(
+            "/auth/login",
+            json={"email": "not-an-email", "password": settings.mirror_demo_password},
+        )
+    assert response.status_code == 422
 
 
 @pytest.mark.anyio
