@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       service_template: ${{ steps.filter.outputs.service_template }}
+      api_gateway: ${{ steps.filter.outputs.api_gateway }}
       db: ${{ steps.filter.outputs.db }}
       frontend: ${{ steps.filter.outputs.frontend }}
       docs_contracts: ${{ steps.filter.outputs.docs_contracts }}
@@ -28,6 +29,9 @@ jobs:
           filters: |
             service_template:
               - 'services/_template/**'
+              - '.github/workflows/**'
+            api_gateway:
+              - 'services/api-gateway/**'
               - '.github/workflows/**'
             db:
               - 'services/db/**'
@@ -47,6 +51,15 @@ jobs:
     with:
       service_path: services/_template
       image_name: mirror-service-template-ci
+
+  api_gateway:
+    name: API gateway checks
+    needs: changes
+    if: needs.changes.outputs.api_gateway == 'true'
+    uses: ./.github/workflows/python-service-ci.yml
+    with:
+      service_path: services/api-gateway
+      image_name: mirror-api-gateway-ci
 
   db:
     name: Database integration checks
@@ -122,7 +135,7 @@ jobs:
 
   ci_summary:
     name: CI summary
-    needs: [changes, service_template, db, frontend, contract_validation]
+    needs: [changes, service_template, db, frontend, contract_validation, api_gateway]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -131,6 +144,8 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           SERVICE_TEMPLATE_CHANGED: ${{ needs.changes.outputs.service_template }}
           SERVICE_TEMPLATE_RESULT: ${{ needs.service_template.result }}
+          API_GATEWAY_CHANGED: ${{ needs.changes.outputs.api_gateway }}
+          API_GATEWAY_RESULT: ${{ needs.api_gateway.result }}
           DB_CHANGED: ${{ needs.changes.outputs.db }}
           DB_RESULT: ${{ needs.db.result }}
           FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
@@ -145,6 +160,11 @@ jobs:
 
           if [ "$SERVICE_TEMPLATE_CHANGED" = "true" ] && [ "$SERVICE_TEMPLATE_RESULT" != "success" ]; then
             echo "Service template checks did not pass: $SERVICE_TEMPLATE_RESULT"
+            exit 1
+          fi
+
+          if [ "$API_GATEWAY_CHANGED" = "true" ] && [ "$API_GATEWAY_RESULT" != "success" ]; then
+            echo "API gateway checks did not pass: $API_GATEWAY_RESULT"
             exit 1
           fi
 
