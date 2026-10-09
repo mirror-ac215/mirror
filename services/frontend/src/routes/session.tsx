@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TopNav } from "@/components/mirror/TopNav";
-import { cannedReplies, seededChat } from "@/lib/mirror-data";
+import { seededChat } from "@/lib/mirror-data";
+import * as api from "@/lib/api/client";
 import { setRole } from "@/lib/role";
 
 export const Route = createFileRoute("/session")({
@@ -38,10 +39,18 @@ function Session() {
   const [draft, setDraft] = useState("");
   const [crisis, setCrisis] = useState(false);
   const [expr, setExpr] = useState({ calm: 38, anxious: 44, sad: 18 });
-  const replyIndex = useRef(0);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setRole("patient"), []);
+  // Start a session with the gateway (or the mock) when the screen opens.
+  useEffect(() => {
+    api
+      .startSession(true)
+      .then((s) => setSessionId(s.session_id))
+      .catch(() => setSessionId(null));
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -62,14 +71,34 @@ function Session() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
-  const send = () => {
+  const send = async () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || !sessionId || sending) return;
     setDraft("");
-    setMessages((m) => [...m, { from: "user", text }]);
-    const reply = cannedReplies[replyIndex.current % cannedReplies.length]!;
-    replyIndex.current += 1;
-    setTimeout(() => setMessages((m) => [...m, { from: "bot", text: reply }]), 750);
+    setSending(true);
+    // Show the patient's message, plus an empty bot bubble that fills up as tokens arrive.
+    setMessages((m) => [...m, { from: "user", text }, { from: "bot", text: "" }]);
+    try {
+      await api.sendMessage(sessionId, text, (event) => {
+        if (event.type === "crisis") {
+          setMessages((m) => m.slice(0, -1)); // no persona reply on a crisis turn
+          setCrisis(true);
+        } else if (event.type === "token") {
+          setMessages((m) => {
+            const last = m[m.length - 1];
+            if (!last) return m;
+            return [...m.slice(0, -1), { ...last, text: last.text + event.data }];
+          });
+        }
+      });
+    } catch {
+      setMessages((m) => [
+        ...m.slice(0, -1),
+        { from: "bot", text: "Sorry, I couldn't reach the server. Please try again." },
+      ]);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
