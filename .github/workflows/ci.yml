@@ -142,7 +142,7 @@ jobs:
         run: uv run pytest -v
 
   compose:
-    name: compose stake smoke test
+    name: Compose stake smoke test
     needs: changes
     if : needs.changes.outputs.compose == 'true'
     runs-on: ubuntu-latest
